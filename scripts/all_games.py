@@ -172,6 +172,37 @@ def all_games(sort_by='id'):
 ''' % (id, name, altnames, gt))
     print('</tbody></table>')
 
+def all_games_json(sort_by='id'):
+    # rules_dir = 'rules'
+    print('''[
+''')
+
+    if sort_by == 'id':
+        get_games_func = GAME_DB.getGamesIdSortedById
+    else:
+        get_games_func = GAME_DB.getGamesIdSortedByName
+
+    for id in get_games_func():
+        gi = GAME_DB.get(id)
+        if not gi.rules_filename:
+            rules_fn = _get_game_rules_filename(gi.name)
+        else:
+            rules_fn = gi.rules_filename
+        gt = CSI.TYPE_NAME[gi.category]
+        if gt == 'French':
+            gt = 'French (%s)' % GAME_BY_TYPE[gi.si.game_type]
+        name = gi.name
+        altnames = '\\n'.join(gi.altnames)
+        fn = os.path.join(rules_dir, rules_fn)
+        print('''{
+"id": %s,
+"name": "%s",
+"altnames": "%s",
+"category": "%s"
+},
+''' % (id, name, altnames, gt))
+    print(']')
+
 
 def create_html(sort_by):
     if html_mode != 'bare':
@@ -281,6 +312,8 @@ if len(sys.argv) < 2 or sys.argv[1] == 'html':
     if len(sys.argv) > 4:
         html_mode = sys.argv[4]
     create_html(sort_by)
+elif sys.argv[1] == 'json':
+    all_games_json()
 elif sys.argv[1] == 'gettext':
     get_text()
 elif sys.argv[1] == 'text':
